@@ -1,0 +1,119 @@
+services:
+# Keycloak con healthcheck simplificado
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: dpp-keycloak
+    ports:
+      - "9080:9080"
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=dev-file
+      - KC_HTTP_ENABLED=true
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTP_RELATIVE_PATH=/auth
+      - KC_HTTP_PORT=9080
+    command: ["start-dev", "--import-realm"]
+    volumes:
+      - ./deployment/local/iam:/opt/keycloak/data/import:ro
+    networks:
+      dpp-network:
+        aliases:
+          - centralidp.int.demo.catena-x.net
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/9080 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Backend (Spring Boot)
+  dpp-backend:
+    build:
+      context: ./dpp-backend/digitalproductpass
+      dockerfile: Dockerfile
+    container_name: dpp-backend
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8888
+      # OAuth/Keycloak
+      - OAUTH_APPID=Cl13-CX-Battery
+      - OAUTH_TECHUSER_CLIENTID=Cl13-CX-Battery
+      - OAUTH_TECHUSER_CLIENTSECRET=""
+      - OAUTH_KEYCLOAK_REALM=CX-Central
+      - OAUTH_KEYCLOAK_SERVERURL=http://centralidp.int.demo.catena-x.net:9080/auth
+      # URLs backend
+      - BACKEND_DISCOVERY_HOSTNAME=http://centralidp.int.demo.catena-x.net:9080
+      - BACKEND_CONFIGURATION_TOKENURL=http://centralidp.int.demo.catena-x.net:9080/auth/realms/CX-Central/protocol/openid-connect/token
+      - BACKEND_CONFIGURATION_USERINFOURL=http://centralidp.int.demo.catena-x.net:9080/auth/realms/CX-Central/protocol/openid-connect/userinfo
+      # DESHABILITAR servicios externos
+      - EDC_ENABLED=false
+      - DISCOVERY_ENABLED=false
+      - IRS_ENABLED=false
+      - WALLET_ENABLED=false
+      - VERIFICATION_ENABLED=false
+      - DPP_VERIFICATION_ENABLED=false
+      - DPP_VERIFICATION_AUTO=false
+      - DPP_WALLET_ENABLED=false
+      - DPP_CONSUMER_ENABLED=false
+    volumes:
+      - backend-data:/app/data
+    networks:
+      - dpp-network
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (Vue.js) con configuración correcta del realm
+  dpp-frontend:
+    build:
+      context: ./dpp-frontend
+      dockerfile: Dockerfile
+      args:
+        - APP_VERSION=4.0.1
+        - APP_API_TIMEOUT=30000
+        - APP_API_MAX_RETRIES=3
+        - APP_API_DELAY=1000
+    environment:
+      # URLs desde la perspectiva del NAVEGADOR (no del contenedor)
+      - IDP_URL=http://centralidp.int.demo.catena-x.net:9080/auth
+      - SERVER_URL=http://dpp-frontend:8080
+      - BACKEND_URL=http://dpp-backend:8888
+      - KEYCLOAK_CLIENTID=Cl13-CX-Battery
+      - KEYCLOAK_REALM=CX-Central
+      - KEYCLOAK_ONLOAD=check-sso
+      - VERSION=4.0.1
+      - API_DELAY=1000
+      - API_MAX_RETRIES=3
+      - API_SEARCH_TIMEOUT=30000
+      - API_NEGOTIATE_TIMEOUT=30000
+      - API_DECLINE_TIMEOUT=30000
+      - IRS_DELAY=1000
+      - IRS_MAX_WAITING_TIME=60000
+      - AUTH_BPN_CHECK=false
+      - AUTH_BPN_NUMBER=""
+      - APP_PORTAL_URL=""
+      - APP_ADMIN_EMAIL=""
+      - APP_AUTO_SIGN=false
+    container_name: dpp-frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - dpp-backend
+    networks:
+      - dpp-network
+
+networks:
+  dpp-network:
+    driver: bridge
+
+volumes:
+  backend-data:
