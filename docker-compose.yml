@@ -42,7 +42,7 @@ services:
       # OAuth/Keycloak
       - OAUTH_APPID=Cl13-CX-Battery
       - OAUTH_TECHUSER_CLIENTID=Cl13-CX-Battery
-      - OAUTH_TECHUSER_CLIENTSECRET=""
+      - OAUTH_TECHUSER_CLIENTSECRET=
       - OAUTH_KEYCLOAK_REALM=CX-Central
       - OAUTH_KEYCLOAK_SERVERURL=http://centralidp.int.demo.catena-x.net:9080/auth
       # URLs backend
@@ -99,9 +99,9 @@ services:
       - IRS_DELAY=1000
       - IRS_MAX_WAITING_TIME=60000
       - AUTH_BPN_CHECK=false
-      - AUTH_BPN_NUMBER=""
-      - APP_PORTAL_URL=""
-      - APP_ADMIN_EMAIL=""
+      - AUTH_BPN_NUMBER=
+      - APP_PORTAL_URL=
+      - APP_ADMIN_EMAIL=
       - APP_AUTO_SIGN=false
     container_name: dpp-frontend
     ports:
