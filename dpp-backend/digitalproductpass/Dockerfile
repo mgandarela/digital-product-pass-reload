@@ -26,12 +26,14 @@
 
 FROM eclipse-temurin:21-jre-alpine
 
+RUN apk add --no-cache curl
+
 RUN addgroup -g 10001 appgroup \
 	&& adduser -u 10000 -g 10001 -h /home/nonroot -D nonroot
     
 WORKDIR /app
 
-VOLUME data log
+#VOLUME data log
 
 RUN mkdir -p ./log
 RUN mkdir -p ./data

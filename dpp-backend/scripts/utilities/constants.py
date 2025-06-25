@@ -25,13 +25,13 @@
 
 class Constants:
 
-    PROVIDER = "https://centralidp.int.demo.catena-x.net"
-    TOKEN_URI = "https://centralidp.int.demo.catena-x.net/auth/realms/CX-Central/protocol/openid-connect/token"
-    AUTH_URI = "https://centralidp.int.demo.catena-x.net/auth/realms/CX-Central/protocol/openid-connect/auth"
-    REDIRECT_URI = "https://dpp.int.demo.catena-x.net"
+    PROVIDER = "http://centralidp.int.demo.catena-x.net:9080
+    TOKEN_URI = "http://centralidp.int.demo.catena-x.net:9080/auth/realms/CX-Central/protocol/openid-connect/token"
+    AUTH_URI = "http://centralidp.int.demo.catena-x.net:9080/auth/realms/CX-Central/protocol/openid-connect/auth"
+    REDIRECT_URI = "http://dpp.int.demo.catena-x.net:9080"
     REALM = "CX-Central"
     SCOPE = "openid"
-    SERVER_URL = "https://dpp.int.demo.catena-x.net"
+    SERVER_URL = "http://dpp.int.demo.catena-x.net:9080"
     CREATE_API = "/api/contract/create"
     SEARCH_API = "/api/contract/search"
     AGREE_API = "/api/contract/agree"
